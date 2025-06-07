@@ -1,28 +1,59 @@
 import streamlit as st
+import pandas as pd
 import joblib
-import numpy as np
 
-# Load model
-model = joblib.load("diabetes_model.pkl")
+# Load pipeline
+model = joblib.load("pipeline_diabetes.pkl")
 
-st.title("Prediksi Risiko Diabetes - PIMA Dataset")
+st.title("📈Prediksi Risiko Diabetes📈")
 
-# Input fitur
-pregnancies = st.number_input("Jumlah Kehamilan", min_value=0, max_value=20, value=1)
-glucose = st.number_input("Glukosa", min_value=0, max_value=200, value=120)
-blood_pressure = st.number_input("Tekanan Darah", min_value=0, max_value=140, value=70)
-skin_thickness = st.number_input("Tebal Kulit", min_value=0, max_value=100, value=20)
-insulin = st.number_input("Insulin", min_value=0, max_value=900, value=80)
-bmi = st.number_input("BMI", min_value=0.0, max_value=70.0, value=25.0)
-dpf = st.number_input("Diabetes Pedigree Function", min_value=0.0, max_value=2.5, value=0.5)
-age = st.number_input("Umur", min_value=10, max_value=100, value=30)
+# Input dari pengguna
+pregnancies = st.number_input("Pregnancies", 0)
+glucose = st.number_input("Glucose", 0.0)
+blood_pressure = st.number_input("Blood Pressure", 0.0)
+skin_thickness = st.number_input("Skin Thickness", 0.0)
+insulin = st.number_input("Insulin", 0.0)
+bmi = st.number_input("BMI", 0.0)
+dpf = st.number_input("Diabetes Pedigree Function", 0.0)
+age = st.number_input("Age", 0)
 
+# Buat turunan fitur
+if insulin <= 80:
+    insulin_level = "Low"
+elif insulin <= 120:
+    insulin_level = "Normal"
+else:
+    insulin_level = "Prediabet"
+
+if bmi < 18.5:
+    weight_category = "Underweight"
+elif bmi < 25:
+    weight_category = "Normal"
+elif bmi < 30:
+    weight_category = "Overweight"
+else:
+    weight_category = "Obese"
+
+# Susun dataframe input
+input_df = pd.DataFrame([{
+    "Pregnancies": pregnancies,
+    "Glucose": glucose,
+    "BloodPressure": blood_pressure,
+    "SkinThickness": skin_thickness,
+    "Insulin": insulin,
+    "BMI": bmi,
+    "DiabetesPedigreeFunction": dpf,
+    "Age": age,
+    "WeightCategory": weight_category,
+    "InsulinLevel": insulin_level
+}])
+
+# Prediksi
 if st.button("Prediksi"):
-    input_data = np.array([[pregnancies, glucose, blood_pressure, skin_thickness,
-                            insulin, bmi, dpf, age]])
-    prediction = model.predict(input_data)[0]
+    prediction = model.predict(input_df)[0]
+    prob = model.predict_proba(input_df)[0][1] * 100
 
     if prediction == 1:
-        st.error("Hasil: Berisiko Diabetes")
+        st.error(f"Hasil Prediksi: Positif Diabetes (Probabilitas: {prob:.2f}%)")
     else:
-        st.success("Hasil: Tidak Berisiko Diabetes")
+        st.success(f"Hasil Prediksi: Negatif Diabetes (Probabilitas: {prob:.2f}%)")
